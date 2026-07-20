@@ -1,0 +1,35 @@
+# Compilación de .NET
+bin/
+obj/
+
+# Archivos de usuario
+*.user
+*.suo
+.vs/
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.*.local.json
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Herramientas locales
+.agents/
+.codex/
+tmp/
+.temp/
+
+# Logs
+*.log
+
+# Certificados locales
+*.pfx
+*.key
+*.pem

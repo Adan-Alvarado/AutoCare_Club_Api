@@ -2,34 +2,48 @@
 bin/
 obj/
 
-# Archivos de usuario
-*.user
-*.suo
+# Visual Studio / VS Code / JetBrains
 .vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userossc
+*.sln.docstates
 
-# Variables de entorno y secretos
+# Variables locales y secretos
 .env
 .env.*
 !.env.example
 appsettings.Local.json
 appsettings.*.local.json
 
-# IDE
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# Herramientas locales
-.agents/
-.codex/
-tmp/
-.temp/
-
-# Logs
-*.log
-
-# Certificados locales
+# Certificados y claves
 *.pfx
 *.key
 *.pem
+
+# Logs y archivos temporales
+*.log
+logs/
+tmp/
+.temp/
+*.tmp
+*.temp
+
+# Bases de datos locales no administradas por Docker
+*.db
+*.db-shm
+*.db-wal
+
+# Pruebas y cobertura
+TestResults/
+coverage/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Configuración local de herramientas
+.agents/
+.codex/

@@ -2,6 +2,7 @@ using AutoCare_Club.Api.Dtos.Vehicle;
 using AutoCare_Club.Api.Database;
 using AutoCare_Club.Api.Entities;
 using AutoCare_Club.Api.Mappers;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoCare_Club.Api.Services.Vehicle
 {
@@ -11,6 +12,46 @@ namespace AutoCare_Club.Api.Services.Vehicle
         public VehicleService(AutoCareDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<List<VehicleDto>> GetAllAsync(
+             bool includeInactive = false)
+        {
+            IQueryable<VehicleEntity> query =
+                _context.Vehicles.AsNoTracking();
+
+            if (!includeInactive)
+            {
+                query = query.Where(vehicle => vehicle.IsActive);
+            }
+
+            List<VehicleEntity> vehicles =
+                await query.ToListAsync();
+
+            return VehicleMapper.ListEntityToListDto(vehicles);
+        }
+
+        public async Task<VehicleDto?> GetByIdAsync(
+            string id,
+            bool includeInactive = false)
+        {
+            IQueryable<VehicleEntity> query =
+                 _context.Vehicles.AsNoTracking();
+
+            if (!includeInactive)
+            {
+                query = query.Where(vehicle => vehicle.IsActive);
+            }
+            
+            VehicleEntity? vehicle = await query
+            .FirstOrDefaultAsync(vehicle => vehicle.Id == id); 
+
+            if(vehicle is null)
+            {
+            return null;
+            }
+
+            return VehicleMapper.EntityToDto(vehicle);
         }
 
         public async Task<VehicleDto> CreateAsync(VehicleCreateDto dto)
@@ -23,24 +64,35 @@ namespace AutoCare_Club.Api.Services.Vehicle
             return VehicleMapper.EntityToDto(vehicle);
         }
 
-        public Task<bool> DeleteAsync(string id)
+        public async Task<VehicleDto?> EditAsync(
+            string id,
+            VehicleEditDto dto)
         {
-            throw new NotImplementedException();
+            VehicleEntity? vehicle = await _context.Vehicles
+            .FirstOrDefaultAsync(vehicle => vehicle.Id == id);
+            if (vehicle is null)
+            {
+                return null;
+            }
+
+            VehicleMapper.EditDtoToEntity(vehicle, dto);
+            await _context.SaveChangesAsync();
+            return VehicleMapper.EntityToDto(vehicle);
         }
 
-        public Task<VehicleDto?> EditAsync(string id, VehicleEditDto dto)
+        public async Task<bool> DeleteAsync(string id)
         {
-            throw new NotImplementedException();
-        }
+            VehicleEntity? vehicle= await _context.Vehicles
+                .FirstOrDefaultAsync(vehicle => vehicle.Id == id);
 
-        public Task<List<VehicleDto>> GetAllAsync(bool includeInactive = false)
-        {
-            throw new NotImplementedException();
-        }
+            if (vehicle is null)
+            {
+                return false;
+            }
 
-        public Task<VehicleDto?> GetByIdAsync(string id, bool includeInactive = false)
-        {
-            throw new NotImplementedException();
+            vehicle.IsActive = false;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

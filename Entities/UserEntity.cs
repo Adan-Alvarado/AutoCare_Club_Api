@@ -11,6 +11,7 @@ namespace AutoCare_Club.Api.Entities
         public string FirstName { get; set; } = string.Empty;
 
         [Column("last_name")]
+        [Required]
         public string LastName { get; set; } = string.Empty;
 
         [Column("is_active")]

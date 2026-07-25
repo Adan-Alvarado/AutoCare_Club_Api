@@ -2,11 +2,11 @@ using AutoCare_Club.Api.Database;
 using AutoCare_Club.Api.Services.ServicesCatalog;
 using AutoCare_Club_Api.Services.Users;
 using Microsoft.EntityFrameworkCore;
+using AutoCare_Club.Api.Services.Vehicle;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
@@ -20,6 +20,10 @@ builder.Services.AddScoped<
     ServiceCatalogService>();
 builder.Services.AddTransient<IUserService, UserService>();
 
+
+builder.Services.AddScoped<
+    IVehicleService,
+    VehicleService>();
 
 var app = builder.Build();
 

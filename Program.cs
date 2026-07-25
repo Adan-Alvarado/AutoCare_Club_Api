@@ -1,5 +1,6 @@
 using AutoCare_Club.Api.Database;
 using AutoCare_Club.Api.Services.ServicesCatalog;
+using AutoCare_Club_Api.Services.Users;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,8 @@ builder.Services.AddDbContext<AutoCareDbContext>(options =>
 builder.Services.AddScoped<
     IServiceCatalogService,
     ServiceCatalogService>();
+builder.Services.AddTransient<IUserService, UserService>();
+
 
 var app = builder.Build();
 

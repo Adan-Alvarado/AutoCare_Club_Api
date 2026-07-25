@@ -13,6 +13,6 @@ namespace AutoCare_Club_Api.Dtos.Common
         public int PageSize { get; set; }
         public int TotalItems { get; set; }
         public int TotalPages { get; set; }
-        public T Items { get; set; }
+        public T? Items { get; set; }
     }
 }

@@ -31,6 +31,13 @@ namespace AutoCare_Club.Api.Database
                 .ToTable("users_logins");
             builder.Entity<IdentityUserToken<string>>()
                 .ToTable("users_tokens");
+
+            builder.Entity<VehicleEntity>()
+                .HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(vehicle => vehicle.UserId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
         public DbSet<ServiceEntity> Services { get; set; }

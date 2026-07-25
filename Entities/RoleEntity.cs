@@ -4,6 +4,6 @@ namespace AutoCare_Club_Api.Entities
 {
     public class RoleEntity : IdentityRole
     {
-        public string Descripcion { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
     }
 }

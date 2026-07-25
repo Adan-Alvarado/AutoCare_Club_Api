@@ -3,6 +3,7 @@ using System;
 using AutoCare_Club.Api.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AutoCare_Club.Api.Migrations
 {
     [DbContext(typeof(AutoCareDbContext))]
-    partial class AutoCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260725224822_AddVehicleUserRelation")]
+    partial class AddVehicleUserRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

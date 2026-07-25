@@ -47,7 +47,7 @@ namespace AutoCare_Club.Api.Mappers
                 Id = entity.Id,
                 FirstName = entity.FirstName,
                 LastName = entity.LastName,
-                Email = entity.Email,
+                 Email = entity.Email ?? string.Empty,
                 CreatedAt = entity.CreatedAt
             };
         }

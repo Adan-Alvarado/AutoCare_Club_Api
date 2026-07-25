@@ -313,8 +313,8 @@ namespace AutoCare_Club_Api.Services.Users
             }
         }
 
-        private async Task<ResponseDto<UserActionResponseDto>>
-            ValidateRolesAsync(IEnumerable<string> roles)
+        private async Task<ResponseDto<UserActionResponseDto>?>
+            ValidateRolesAsync(IEnumerable<string>? roles)
         {
             if (roles is null)
             {
@@ -357,7 +357,7 @@ namespace AutoCare_Club_Api.Services.Users
             };
         }
 
-        private async Task<ResponseDto<UserActionResponseDto>>
+        private async Task<ResponseDto<UserActionResponseDto>?>
             UpdateRolesAsync(
                 UserEntity user,
                 IEnumerable<string> requestedRoles)

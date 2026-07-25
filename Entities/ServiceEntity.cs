@@ -2,7 +2,7 @@ namespace AutoCare_Club.Api.Entities
 {
     public class ServiceEntity
     {
-        public int Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;

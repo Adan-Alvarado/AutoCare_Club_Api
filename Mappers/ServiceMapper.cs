@@ -10,6 +10,7 @@ namespace AutoCare_Club.Api.Mappers
         {
             return new ServiceEntity
             {
+                Id = Guid.NewGuid().ToString(),
                 Name = dto.Name.Trim(),
                 Description = dto.Description.Trim(),
                 Price = dto.Price,

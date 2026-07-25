@@ -34,7 +34,7 @@ namespace AutoCare_Club.Api.Services.ServicesCatalog
         }
 
         public async Task<ServiceDto?> GetByIdAsync(
-            int id,
+            string id,
             bool includeInactive = false)
         {
             IQueryable<ServiceEntity> query =
@@ -68,7 +68,7 @@ namespace AutoCare_Club.Api.Services.ServicesCatalog
         }
 
         public async Task<ServiceDto?> EditAsync(
-            int id,
+            string id,
             ServiceEditDto dto)
         {
             ServiceEntity? service = await _context.Services
@@ -84,7 +84,7 @@ namespace AutoCare_Club.Api.Services.ServicesCatalog
             return ServiceMapper.EntityToDto(service);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(string id)
         {
             ServiceEntity? service = await _context.Services
                 .FirstOrDefaultAsync(service => service.Id == id);

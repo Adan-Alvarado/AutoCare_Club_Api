@@ -25,14 +25,14 @@ namespace AutoCare_Club.Api.Controllers
             return Ok(services);
         }
 
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<ServiceDto>> GetById(int id)
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<ServiceDto>> GetById(string id)
         {
-            if (id <= 0)
+            if (!Guid.TryParse(id, out _))
             {
                 return BadRequest(new
                 {
-                    message = "El identificador debe ser mayor que cero."
+                    message = "El identificador debe ser un GUID válido."
                 });
             }
 

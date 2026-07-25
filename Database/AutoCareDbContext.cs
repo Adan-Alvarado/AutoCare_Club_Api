@@ -12,5 +12,6 @@ namespace AutoCare_Club.Api.Database
         }
 
         public DbSet<ServiceEntity> Services { get; set; }
+        public DbSet<VehicleEntity> Vehicles { get; set; }
     }
 }

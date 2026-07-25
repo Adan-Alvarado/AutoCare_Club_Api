@@ -1,0 +1,29 @@
+name: autocare-club
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: autocare-club-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: autocare_club
+      POSTGRES_USER: autocare_user
+      POSTGRES_PASSWORD: autocare_dev_password
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - autocare_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U autocare_user -d autocare_club
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  autocare_postgres_data:

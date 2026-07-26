@@ -1,11 +1,14 @@
 using AutoCare_Club.Api.Database;
 using AutoCare_Club.Api.Services.ServicesCatalog;
+using AutoCare_Club_Api.Services.Auth;
+using AutoCare_Club_Api.Services.Roles;
 using AutoCare_Club_Api.Services.Users;
 using Microsoft.EntityFrameworkCore;
 using AutoCare_Club.Api.Services.Vehicle;
 using AutoCare_Club.Api.Entities;
 using AutoCare_Club_Api.Entities;
 using Microsoft.AspNetCore.Identity;
+using AutoCare_Club.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,20 +21,23 @@ builder.Services.AddDbContext<AutoCareDbContext>(options =>
         builder.Configuration.GetConnectionString(
             "DefaultConnection")));
 
-builder.Services
-    .AddIdentity<UserEntity, RoleEntity>()
-    .AddEntityFrameworkStores<AutoCareDbContext>()
-    .AddDefaultTokenProviders();
 
 builder.Services.AddScoped<
     IServiceCatalogService,
     ServiceCatalogService>();
 builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<IAuthService, AuthService>();
+builder.Services.AddTransient<IRoleService, RoleService>();
 
 
 builder.Services.AddScoped<
     IVehicleService,
     VehicleService>();
+
+builder.Services.AddCorsConfiguration(builder.Configuration);
+
+builder.Services.AddAuthenticationConfig(builder.Configuration);
+
 
 var app = builder.Build();
 
@@ -41,8 +47,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseCors("CorsPolicy");
+
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -9,6 +9,8 @@ using AutoCare_Club.Api.Entities;
 using AutoCare_Club_Api.Entities;
 using Microsoft.AspNetCore.Identity;
 using AutoCare_Club.Api.Extensions;
+using AutoCare_Club_Api.Database;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,10 +43,15 @@ builder.Services.AddAuthenticationConfig(builder.Configuration);
 
 var app = builder.Build();
 
+await DbInitializer.InitializeAsync(
+    app.Services,
+    app.Configuration);
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseCors("CorsPolicy");

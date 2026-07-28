@@ -14,8 +14,6 @@ namespace AutoCare_Club_Api.Dtos.User
         [StringLength(50, ErrorMessage = "Los {0} no pueden tener más de {1} caracteres")]
         public string LastName { get; set; } = string.Empty;
         
-        [Display(Name = "Fecha de nacimiento")]
-        public DateTime CreatedAt { get; set; }
         
         [Display(Name = "Correo electrónico")]
         [Required(ErrorMessage = "Los {0} son requeridos")]

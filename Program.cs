@@ -10,6 +10,7 @@ using AutoCare_Club_Api.Entities;
 using Microsoft.AspNetCore.Identity;
 using AutoCare_Club.Api.Extensions;
 using AutoCare_Club_Api.Database;
+using AutoCare_Club.Api.Services.Orders;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,10 @@ builder.Services.AddTransient<IRoleService, RoleService>();
 builder.Services.AddScoped<
     IVehicleService,
     VehicleService>();
+
+builder.Services.AddScoped<
+    IOrderService,
+    OrderService>();
 
 builder.Services.AddCorsConfiguration(builder.Configuration);
 

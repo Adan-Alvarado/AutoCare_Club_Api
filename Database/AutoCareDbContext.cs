@@ -38,9 +38,66 @@ namespace AutoCare_Club.Api.Database
                 .HasForeignKey(vehicle => vehicle.UserId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<OrderEntity>(entity =>
+            {
+                entity.Property(order => order.Total)
+                    .HasPrecision(12, 2);
+
+                entity.Property(order => order.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(order => order.AppointmentId)
+                    .HasMaxLength(36);
+
+                entity.HasIndex(order => order.UserId)
+                    .IsUnique()
+                    .HasFilter("\"Status\" = 'Draft'");
+
+                entity.HasOne<UserEntity>()
+                    .WithMany()
+                    .HasForeignKey(order => order.UserId)
+                    .IsRequired()
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne<VehicleEntity>()
+                    .WithMany()
+                    .HasForeignKey(order => order.VehicleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<OrderItemEntity>(entity =>
+            {
+                entity.Property(item => item.UnitPrice)
+                    .HasPrecision(12, 2);
+
+                entity.Property(item => item.Subtotal)
+                    .HasPrecision(12, 2);
+
+                entity.HasIndex(item => new
+                {
+                    item.OrderId,
+                    item.ServiceId
+                }).IsUnique();
+
+                entity.HasOne(item => item.Order)
+                    .WithMany(order => order.Items)
+                    .HasForeignKey(item => item.OrderId)
+                    .IsRequired()
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(item => item.Service)
+                    .WithMany()
+                    .HasForeignKey(item => item.ServiceId)
+                    .IsRequired()
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
 
         public DbSet<ServiceEntity> Services { get; set; }
         public DbSet<VehicleEntity> Vehicles { get; set; }
+        public DbSet<OrderEntity> Orders { get; set; }
+        public DbSet<OrderItemEntity> OrderItems { get; set; }
     }
 }

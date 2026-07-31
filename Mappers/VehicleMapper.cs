@@ -6,12 +6,13 @@ namespace AutoCare_Club.Api.Mappers
     public static class VehicleMapper
     {
         public static VehicleEntity CreateDtoToEntity(
-            VehicleCreateDto dto)
+            VehicleCreateDto dto,
+            string userId)
         {
             return new VehicleEntity
             {
                 Id = Guid.NewGuid().ToString(),
-                UserId = dto.UserId,
+                UserId = userId,
                 Brand = dto.Brand.Trim(),
                 Year = dto.Year,
                 LicensePlate = dto.LicensePlate.Trim(),
@@ -43,7 +44,6 @@ namespace AutoCare_Club.Api.Mappers
             entity.Year = dto.Year;
             entity.LicensePlate = dto.LicensePlate.Trim();
             entity.VehicleType = dto.VehicleType.Trim();
-            entity.IsActive = dto.IsActive;
 
             return entity;
         }

@@ -18,7 +18,5 @@ namespace AutoCare_Club.Api.Dtos.Vehicle
         [Required(ErrorMessage = "El tipo de vehículo es requerido")]
         [StringLength(20, MinimumLength = 4, ErrorMessage = "El tipo debe tener entre 4 y 20 caracteres")]
         public string VehicleType { get; set; } = string.Empty;
-
-        public bool IsActive { get; set; }
     }
 }

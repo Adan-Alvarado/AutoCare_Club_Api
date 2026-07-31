@@ -5,19 +5,27 @@ namespace AutoCare_Club.Api.Services.Vehicle
     public interface IVehicleService
     {
         Task<List<VehicleDto>> GetAllAsync(
-           bool includeInactive = false);
+            string userId,
+            bool includeInactive = false);
 
         Task<VehicleDto?> GetByIdAsync(
             string id,
+            string userId,
             bool includeInactive = false
         );
 
-        Task<VehicleDto> CreateAsync(VehicleCreateDto dto);
+        Task<VehicleDto> CreateAsync(
+            VehicleCreateDto dto,
+            string userId);
+
         Task<VehicleDto?> EditAsync(
             string id,
+            string userId,
             VehicleEditDto dto
         );
 
-        Task<bool> DeleteAsync(string id);
+        Task<bool> DeleteAsync(
+            string id,
+            string userId);
     }
 }

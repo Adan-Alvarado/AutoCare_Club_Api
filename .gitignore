@@ -47,3 +47,4 @@ Thumbs.db
 # Configuración local de herramientas
 .agents/
 .codex/
+node_modules

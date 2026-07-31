@@ -3,6 +3,7 @@ using System;
 using AutoCare_Club.Api.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AutoCare_Club.Api.Migrations
 {
     [DbContext(typeof(AutoCareDbContext))]
-    partial class AutoCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260725214357_UpdateEntityNullability")]
+    partial class UpdateEntityNullability
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -171,8 +174,6 @@ namespace AutoCare_Club.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("Vehicles");
                 });
 
@@ -310,15 +311,6 @@ namespace AutoCare_Club.Api.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("users_tokens", (string)null);
-                });
-
-            modelBuilder.Entity("AutoCare_Club.Api.Entities.VehicleEntity", b =>
-                {
-                    b.HasOne("AutoCare_Club.Api.Entities.UserEntity", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

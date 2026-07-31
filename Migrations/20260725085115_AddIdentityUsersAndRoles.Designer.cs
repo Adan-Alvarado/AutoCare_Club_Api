@@ -3,6 +3,7 @@ using System;
 using AutoCare_Club.Api.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AutoCare_Club.Api.Migrations
 {
     [DbContext(typeof(AutoCareDbContext))]
-    partial class AutoCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260725085115_AddIdentityUsersAndRoles")]
+    partial class AddIdentityUsersAndRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,7 +31,6 @@ namespace AutoCare_Club.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("DurationMinutes")
@@ -41,7 +43,6 @@ namespace AutoCare_Club.Api.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<decimal>("Price")
@@ -148,30 +149,24 @@ namespace AutoCare_Club.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Brand")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
                     b.Property<string>("LicensePlate")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("VehicleType")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("Year")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Vehicles");
                 });
@@ -186,7 +181,6 @@ namespace AutoCare_Club.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Descripcion")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
@@ -310,15 +304,6 @@ namespace AutoCare_Club.Api.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("users_tokens", (string)null);
-                });
-
-            modelBuilder.Entity("AutoCare_Club.Api.Entities.VehicleEntity", b =>
-                {
-                    b.HasOne("AutoCare_Club.Api.Entities.UserEntity", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

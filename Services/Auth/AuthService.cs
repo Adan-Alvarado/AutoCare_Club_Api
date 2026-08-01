@@ -7,6 +7,7 @@ using AutoCare_Club.Api.Database;
 using AutoCare_Club.Api.Entities;
 using AutoCare_Club_Api.Dtos.Auth;
 using AutoCare_Club_Api.Dtos.Common;
+using AutoCare_Club_Api.Dtos.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
@@ -236,8 +237,7 @@ namespace AutoCare_Club_Api.Services.Auth
                     ValidateAudience = true,
                     ValidateIssuerSigningKey = true,
 
-                    // Se coloca false porque el access token
-                    // puede estar vencido al renovarlo.
+                    // Se coloca false porque el access token puede estar vencido al renovarlo.
                     ValidateLifetime = false,
 
                     ValidIssuer = GetRequiredJwtSetting(
@@ -302,9 +302,7 @@ namespace AutoCare_Club_Api.Services.Auth
             return minutes > 0 ? minutes : 10080;
         }
 
-        private static ResponseDto<LoginResponseDto> LoginResponse(
-            UserEntity userEntity,
-            JwtSecurityToken jwtToken,
+        private static ResponseDto<LoginResponseDto> LoginResponse(UserEntity userEntity, JwtSecurityToken jwtToken,
             string refreshToken,
             string message)
         {
@@ -331,6 +329,79 @@ namespace AutoCare_Club_Api.Services.Auth
                 StatusCode = HttpStatusCode.UNAUTHORIZED,
                 Status = false,
                 Message = message
+            };
+        }
+
+        public async Task<ResponseDto<UserActionResponseDto>> RegisterAsync(RegisterDto dto)
+        {
+            var existingUser = await _userManager.FindByEmailAsync(
+        dto.Email.Trim());
+
+            if (existingUser is not null)
+            {
+                return new ResponseDto<UserActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "El correo ya está registrado."
+                };
+            }
+
+            var user = new UserEntity
+            {
+                FirstName = dto.FirstName.Trim(),
+                LastName = dto.LastName.Trim(),
+                Email = dto.Email.Trim(),
+                UserName = dto.Email.Trim(),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var createResult = await _userManager.CreateAsync(
+                user,
+                dto.Password);
+
+            if (!createResult.Succeeded)
+            {
+                return new ResponseDto<UserActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = string.Join(
+                        ", ",
+                        createResult.Errors.Select(
+                            error => error.Description))
+                };
+            }
+
+            var roleResult = await _userManager.AddToRoleAsync(
+                user,
+                RolesConstant.Customer);
+
+            if (!roleResult.Succeeded)
+            {
+                await _userManager.DeleteAsync(user);
+
+                return new ResponseDto<UserActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = string.Join(
+                        ", ",
+                        roleResult.Errors.Select(
+                            error => error.Description))
+                };
+            }
+
+            return new ResponseDto<UserActionResponseDto>
+            {
+                StatusCode = HttpStatusCode.CREATED,
+                Status = true,
+                Message = "Cliente registrado correctamente.",
+                Data = new UserActionResponseDto
+                {
+                    Id = user.Id
+                }
             };
         }
     }

@@ -1,5 +1,6 @@
 using AutoCare_Club_Api.Dtos.Auth;
 using AutoCare_Club_Api.Dtos.Common;
+using AutoCare_Club_Api.Dtos.User;
 using AutoCare_Club_Api.Services.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +13,7 @@ namespace AutoCare_Club_Api.Controllers
 
     public class AuthController : ControllerBase
     {
-       private readonly IAuthService _authService;
+        private readonly IAuthService _authService;
 
         public AuthController(
             IAuthService authService
@@ -33,6 +34,15 @@ namespace AutoCare_Club_Api.Controllers
                 Message = response.Message,
                 Data = response.Data
             });
+        }
+
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ResponseDto<UserActionResponseDto>>> Register(RegisterDto dto)
+        {
+            var response = await _authService.RegisterAsync(dto);
+
+            return StatusCode(response.StatusCode, response);
         }
     }
 }

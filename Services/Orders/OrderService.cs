@@ -3,6 +3,7 @@ using AutoCare_Club.Api.Dtos.Orders;
 using AutoCare_Club.Api.Entities;
 using AutoCare_Club.Api.Mappers;
 using AutoCare_Club_Api.Dtos.Common;
+using AutoCare_Club_Api.Entities;
 using Microsoft.EntityFrameworkCore;
 using ApiStatusCode = AutoCare_Club.Api.Constants.HttpStatusCode;
 
@@ -230,6 +231,38 @@ namespace AutoCare_Club.Api.Services.Orders
                     "El vehículo no existe o no pertenece al usuario.");
             }
 
+            AppointmentEntity? appointment = null;
+
+            if (!string.IsNullOrWhiteSpace(dto.AppointmentId))
+            {
+                appointment = await _context.Appointments
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(appointment =>
+                        appointment.Id == dto.AppointmentId
+                        && appointment.UserId == userId);
+
+                if (appointment is null)
+                {
+                    return Error<OrderDto>(
+                        ApiStatusCode.NOT_FOUND,
+                        "La cita no existe o no pertenece al usuario.");
+                }
+
+                if (appointment.VehicleId != dto.VehicleId)
+                {
+                    return Error<OrderDto>(
+                        ApiStatusCode.BAD_REQUEST,
+                        "La cita no corresponde al vehículo seleccionado.");
+                }
+
+                if (appointment.Status == AppointmentStatus.Cancelled)
+                {
+                    return Error<OrderDto>(
+                        ApiStatusCode.BAD_REQUEST,
+                        "No se puede utilizar una cita cancelada.");
+                }
+            }
+
             OrderEntity? order = await OrderQuery()
                 .FirstOrDefaultAsync(order =>
                     order.UserId == userId
@@ -256,6 +289,31 @@ namespace AutoCare_Club.Api.Services.Orders
                     "El carrito contiene servicios que ya no están activos.");
             }
 
+            if (appointment is not null
+                && !order.Items.Any(item =>
+                    item.ServiceId == appointment.ServiceId))
+            {
+                return Error<OrderDto>(
+                    ApiStatusCode.BAD_REQUEST,
+                    "El servicio de la cita no está incluido en la orden.");
+            }
+
+            if (appointment is not null)
+            {
+                bool appointmentAlreadyUsed = await _context.Orders
+                    .AsNoTracking()
+                    .AnyAsync(existingOrder =>
+                        existingOrder.Id != order.Id
+                        && existingOrder.AppointmentId == appointment.Id);
+
+                if (appointmentAlreadyUsed)
+                {
+                    return Error<OrderDto>(
+                        ApiStatusCode.CONFLICT,
+                        "La cita ya está relacionada con otra orden.");
+                }
+            }
+
             order.VehicleId = dto.VehicleId;
             order.AppointmentId = string.IsNullOrWhiteSpace(
                 dto.AppointmentId)
@@ -264,7 +322,16 @@ namespace AutoCare_Club.Api.Services.Orders
             order.Status = OrderStatus.Pending;
             RecalculateTotal(order);
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException) when (appointment is not null)
+            {
+                return Error<OrderDto>(
+                    ApiStatusCode.CONFLICT,
+                    "La cita ya no está disponible para esta orden.");
+            }
 
             return Success(
                 OrderMapper.EntityToDto(order),

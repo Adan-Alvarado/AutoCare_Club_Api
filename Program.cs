@@ -12,6 +12,8 @@ using AutoCare_Club.Api.Extensions;
 using AutoCare_Club_Api.Database;
 using AutoCare_Club.Api.Services.Orders;
 using Scalar.AspNetCore;
+using AutoCare_Club_Api.Services.Schedules;
+using AutoCare_Club_Api.Services.Appointments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,9 +30,13 @@ builder.Services.AddDbContext<AutoCareDbContext>(options =>
 builder.Services.AddScoped<
     IServiceCatalogService,
     ServiceCatalogService>();
-builder.Services.AddTransient<IUserService, UserService>();
-builder.Services.AddTransient<IAuthService, AuthService>();
-builder.Services.AddTransient<IRoleService, RoleService>();
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IScheduleService, ScheduleService>();
+
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
 
 builder.Services.AddScoped<

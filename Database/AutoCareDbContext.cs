@@ -55,6 +55,10 @@ namespace AutoCare_Club.Api.Database
                     .IsUnique()
                     .HasFilter("\"Status\" = 'Draft'");
 
+                entity.HasIndex(order => order.AppointmentId)
+                    .IsUnique()
+                    .HasFilter("\"AppointmentId\" IS NOT NULL");
+
                 entity.HasOne<UserEntity>()
                     .WithMany()
                     .HasForeignKey(order => order.UserId)
@@ -64,6 +68,12 @@ namespace AutoCare_Club.Api.Database
                 entity.HasOne<VehicleEntity>()
                     .WithMany()
                     .HasForeignKey(order => order.VehicleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne<AppointmentEntity>()
+                    .WithMany()
+                    .HasForeignKey(order => order.AppointmentId)
+                    .IsRequired(false)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -93,11 +103,63 @@ namespace AutoCare_Club.Api.Database
                     .IsRequired()
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            builder.Entity<AppointmentEntity>(entity =>
+{
+    entity.Property(appointment => appointment.Status)
+        .HasConversion<string>()
+        .HasMaxLength(20);
+
+    entity.Property(appointment => appointment.Notes)
+        .HasMaxLength(500);
+
+    entity.HasIndex(appointment => new
+    {
+        appointment.AppointmentDate,
+        appointment.StartTime
+    });
+
+    entity.HasIndex(appointment => new
+    {
+        appointment.UserId,
+        appointment.AppointmentDate
+    });
+
+    entity.HasOne<UserEntity>()
+        .WithMany()
+        .HasForeignKey(appointment =>
+            appointment.UserId)
+        .IsRequired()
+        .OnDelete(DeleteBehavior.Restrict);
+
+    entity.HasOne<VehicleEntity>()
+        .WithMany()
+        .HasForeignKey(appointment =>
+            appointment.VehicleId)
+        .IsRequired()
+        .OnDelete(DeleteBehavior.Restrict);
+
+    entity.HasOne<ServiceEntity>()
+        .WithMany()
+        .HasForeignKey(appointment =>
+            appointment.ServiceId)
+        .IsRequired()
+        .OnDelete(DeleteBehavior.Restrict);
+
+    entity.HasOne<UserEntity>()
+        .WithMany()
+        .HasForeignKey(appointment =>
+            appointment.TechnicianId)
+        .IsRequired(false)
+        .OnDelete(DeleteBehavior.Restrict);
+});
         }
 
         public DbSet<ServiceEntity> Services { get; set; }
         public DbSet<VehicleEntity> Vehicles { get; set; }
         public DbSet<OrderEntity> Orders { get; set; }
         public DbSet<OrderItemEntity> OrderItems { get; set; }
+        public DbSet<ScheduleEntity> Schedules { get; set; }
+        public DbSet<AppointmentEntity> Appointments { get; set; }
     }
 }

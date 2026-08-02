@@ -3,6 +3,7 @@ using System;
 using AutoCare_Club.Api.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AutoCare_Club.Api.Migrations
 {
     [DbContext(typeof(AutoCareDbContext))]
-    partial class AutoCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802005348_AddSchedulesAndAppointments")]
+    partial class AddSchedulesAndAppointments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,10 +54,6 @@ namespace AutoCare_Club.Api.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AppointmentId")
-                        .IsUnique()
-                        .HasFilter("\"AppointmentId\" IS NOT NULL");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -469,11 +468,6 @@ namespace AutoCare_Club.Api.Migrations
 
             modelBuilder.Entity("AutoCare_Club.Api.Entities.OrderEntity", b =>
                 {
-                    b.HasOne("AutoCare_Club_Api.Entities.AppointmentEntity", null)
-                        .WithMany()
-                        .HasForeignKey("AppointmentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("AutoCare_Club.Api.Entities.UserEntity", null)
                         .WithMany()
                         .HasForeignKey("UserId")

@@ -55,6 +55,10 @@ namespace AutoCare_Club.Api.Database
                     .IsUnique()
                     .HasFilter("\"Status\" = 'Draft'");
 
+                entity.HasIndex(order => order.AppointmentId)
+                    .IsUnique()
+                    .HasFilter("\"AppointmentId\" IS NOT NULL");
+
                 entity.HasOne<UserEntity>()
                     .WithMany()
                     .HasForeignKey(order => order.UserId)
@@ -64,6 +68,12 @@ namespace AutoCare_Club.Api.Database
                 entity.HasOne<VehicleEntity>()
                     .WithMany()
                     .HasForeignKey(order => order.VehicleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne<AppointmentEntity>()
+                    .WithMany()
+                    .HasForeignKey(order => order.AppointmentId)
+                    .IsRequired(false)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 

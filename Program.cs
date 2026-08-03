@@ -14,6 +14,7 @@ using AutoCare_Club.Api.Services.Orders;
 using Scalar.AspNetCore;
 using AutoCare_Club_Api.Services.Schedules;
 using AutoCare_Club_Api.Services.Appointments;
+using AutoCare_Club.Api.Services.Payments;
 using AutoCare_Club_Api.Services.Technicians;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,6 +48,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IOrderService,
     OrderService>();
+
+builder.Services.AddScoped<
+    IPaymentService,
+    PaymentService>();
 
 builder.Services.AddScoped<
     ITechnicianService,

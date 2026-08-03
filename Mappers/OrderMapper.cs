@@ -14,6 +14,8 @@ namespace AutoCare_Club.Api.Mappers
                 AppointmentId = entity.AppointmentId,
                 Total = entity.Total,
                 Status = entity.Status.ToString(),
+                PaymentStatus = entity.PaymentStatus,
+                PaidAt = entity.PaidAt,
                 CreatedAt = entity.CreatedAt,
                 Items = entity.Items
                     .OrderBy(item => item.Service.Name)

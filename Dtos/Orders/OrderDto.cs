@@ -7,6 +7,8 @@ namespace AutoCare_Club.Api.Dtos.Orders
         public string? AppointmentId { get; set; }
         public decimal Total { get; set; }
         public string Status { get; set; } = string.Empty;
+        public string PaymentStatus { get; set; } = string.Empty;
+        public DateTime? PaidAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
     }

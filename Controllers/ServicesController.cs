@@ -1,5 +1,7 @@
 using AutoCare_Club.Api.Dtos.Services;
 using AutoCare_Club.Api.Services.ServicesCatalog;
+using AutoCare_Club.Api.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AutoCare_Club.Api.Controllers
@@ -48,6 +50,64 @@ namespace AutoCare_Club.Api.Controllers
             }
 
             return Ok(service);
+        }
+
+        [HttpPost]
+        [Authorize(
+            AuthenticationSchemes = "Bearer",
+            Roles = RolesConstant.Admin)]
+        public async Task<ActionResult<ServiceDto>> Create(
+            ServiceCreateDto dto)
+        {
+            ServiceDto service =
+                await _serviceCatalog.CreateAsync(dto);
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = service.Id },
+                service);
+        }
+
+        [HttpPut("{id:guid}")]
+        [Authorize(
+            AuthenticationSchemes = "Bearer",
+            Roles = RolesConstant.Admin)]
+        public async Task<ActionResult<ServiceDto>> Edit(
+            string id,
+            ServiceEditDto dto)
+        {
+            ServiceDto? service =
+                await _serviceCatalog.EditAsync(id, dto);
+
+            if (service is null)
+            {
+                return NotFound(new
+                {
+                    message = "El servicio no fue encontrado."
+                });
+            }
+
+            return Ok(service);
+        }
+
+        [HttpDelete("{id:guid}")]
+        [Authorize(
+            AuthenticationSchemes = "Bearer",
+            Roles = RolesConstant.Admin)]
+        public async Task<IActionResult> Delete(string id)
+        {
+            bool deleted =
+                await _serviceCatalog.DeleteAsync(id);
+
+            if (!deleted)
+            {
+                return NotFound(new
+                {
+                    message = "El servicio no fue encontrado."
+                });
+            }
+
+            return NoContent();
         }
     }
 }

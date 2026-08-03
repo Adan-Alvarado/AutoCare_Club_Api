@@ -50,6 +50,26 @@ namespace AutoCare_Club_Api.Controllers
                     userId));
         }
 
+        [HttpGet("technician/me")]
+        [Authorize(Roles = RolesConstant.Technician)]
+        public async Task<ActionResult<
+            ResponseDto<List<AppointmentDto>>>>
+            GetTechnicianAppointments()
+        {
+            var technicianId = GetAuthenticatedUserId();
+
+            if (technicianId is null)
+            {
+                return UnauthorizedResponse<
+                    List<AppointmentDto>>();
+            }
+
+            return ToActionResult(
+                await _appointmentService
+                    .GetTechnicianAppointmentsAsync(
+                        technicianId));
+        }
+
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<
             ResponseDto<AppointmentDto>>>
@@ -132,6 +152,30 @@ namespace AutoCare_Club_Api.Controllers
                     id,
                     userId,
                     canManage));
+        }
+
+        [HttpPatch("{id:guid}/technician-status")]
+        [Authorize(Roles = RolesConstant.Technician)]
+        public async Task<ActionResult<
+            ResponseDto<AppointmentActionResponseDto>>>
+            UpdateTechnicianStatus(
+                string id,
+                AppointmentStatusEditDto dto)
+        {
+            var technicianId = GetAuthenticatedUserId();
+
+            if (technicianId is null)
+            {
+                return UnauthorizedResponse<
+                    AppointmentActionResponseDto>();
+            }
+
+            return ToActionResult(
+                await _appointmentService
+                    .UpdateStatusByTechnicianAsync(
+                        id,
+                        technicianId,
+                        dto));
         }
 
         [HttpDelete("{id:guid}")]

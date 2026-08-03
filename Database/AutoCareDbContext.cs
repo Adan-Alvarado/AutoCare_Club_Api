@@ -51,6 +51,13 @@ namespace AutoCare_Club.Api.Database
                 entity.Property(order => order.AppointmentId)
                     .HasMaxLength(36);
 
+                entity.Property(order => order.StripePaymentIntentId)
+                    .HasMaxLength(100);
+
+                entity.Property(order => order.PaymentStatus)
+                    .HasMaxLength(50)
+                    .HasDefaultValue("not_started");
+
                 entity.HasIndex(order => order.UserId)
                     .IsUnique()
                     .HasFilter("\"Status\" = 'Draft'");
@@ -58,6 +65,10 @@ namespace AutoCare_Club.Api.Database
                 entity.HasIndex(order => order.AppointmentId)
                     .IsUnique()
                     .HasFilter("\"AppointmentId\" IS NOT NULL");
+
+                entity.HasIndex(order => order.StripePaymentIntentId)
+                    .IsUnique()
+                    .HasFilter("\"StripePaymentIntentId\" IS NOT NULL");
 
                 entity.HasOne<UserEntity>()
                     .WithMany()

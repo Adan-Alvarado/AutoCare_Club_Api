@@ -3,6 +3,7 @@ using System;
 using AutoCare_Club.Api.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AutoCare_Club.Api.Migrations
 {
     [DbContext(typeof(AutoCareDbContext))]
-    partial class AutoCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802232114_AddTechnicians")]
+    partial class AddTechnicians
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,24 +37,10 @@ namespace AutoCare_Club.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PaymentStatus")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasDefaultValue("not_started");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<string>("StripePaymentIntentId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("Total")
                         .HasPrecision(12, 2)
@@ -69,10 +58,6 @@ namespace AutoCare_Club.Api.Migrations
                     b.HasIndex("AppointmentId")
                         .IsUnique()
                         .HasFilter("\"AppointmentId\" IS NOT NULL");
-
-                    b.HasIndex("StripePaymentIntentId")
-                        .IsUnique()
-                        .HasFilter("\"StripePaymentIntentId\" IS NOT NULL");
 
                     b.HasIndex("UserId")
                         .IsUnique()

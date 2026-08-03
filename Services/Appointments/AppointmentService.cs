@@ -167,16 +167,18 @@ namespace AutoCare_Club_Api.Services.Appointments
                     "El cambio de estado no es válido.");
             }
 
-            if (!string.IsNullOrWhiteSpace(
-                dto.TechnicianId))
+            if (!string.IsNullOrWhiteSpace(dto.TechnicianId))
             {
-                var technician = await _userManager
-                    .FindByIdAsync(dto.TechnicianId);
+                var technician = await _context.Technicians
+                    .Include(technician => technician.User)
+                    .FirstOrDefaultAsync(technician =>
+                        technician.UserId == dto.TechnicianId &&
+                        technician.IsActive);
 
                 if (technician is null ||
-                    !technician.IsActive ||
+                    !technician.User.IsActive ||
                     !await _userManager.IsInRoleAsync(
-                        technician,
+                        technician.User,
                         RolesConstant.Technician))
                 {
                     return Error<
@@ -261,6 +263,43 @@ namespace AutoCare_Club_Api.Services.Appointments
             };
         }
 
+        public async Task<ResponseDto<List<AppointmentDto>>>
+            GetTechnicianAppointmentsAsync(string technicianId)
+        {
+            var technicianIsActive =
+                await _context.Technicians.AnyAsync(technician =>
+                    technician.UserId == technicianId &&
+                    technician.IsActive &&
+                    technician.User.IsActive);
+
+            if (!technicianIsActive)
+            {
+                return Error<List<AppointmentDto>>(
+                    HttpStatusCode.FORBIDDEN,
+                    "El técnico no está activo.");
+            }
+
+            var appointments = await _context.Appointments
+                .AsNoTracking()
+                .Where(appointment =>
+                    appointment.TechnicianId == technicianId)
+                .OrderBy(appointment =>
+                    appointment.AppointmentDate)
+                .ThenBy(appointment =>
+                    appointment.StartTime)
+                .ToListAsync();
+
+            return new ResponseDto<List<AppointmentDto>>
+            {
+                StatusCode = HttpStatusCode.OK,
+                Status = true,
+                Message =
+                    "Citas del técnico encontradas correctamente.",
+                Data = AppointmentMapper.ListEntityToListDto(
+                    appointments)
+            };
+        }
+
         public async Task<ResponseDto<AppointmentDto>> GetOneAsync(string id, string userId, bool canManage)
         {
             var appointment = await _context.Appointments
@@ -285,6 +324,80 @@ namespace AutoCare_Club_Api.Services.Appointments
                 Data = AppointmentMapper.EntityToDto(
                     appointment)
             };
+        }
+
+        public async Task<ResponseDto<AppointmentActionResponseDto>>
+            UpdateStatusByTechnicianAsync(
+                string appointmentId,
+                string technicianId,
+                AppointmentStatusEditDto dto)
+        {
+            if (!dto.Status.HasValue)
+            {
+                return Error<AppointmentActionResponseDto>(
+                    HttpStatusCode.BAD_REQUEST,
+                    "El estado es requerido.");
+            }
+
+            var technicianIsActive =
+                await _context.Technicians.AnyAsync(technician =>
+                    technician.UserId == technicianId &&
+                    technician.IsActive &&
+                    technician.User.IsActive);
+
+            if (!technicianIsActive)
+            {
+                return Error<AppointmentActionResponseDto>(
+                    HttpStatusCode.FORBIDDEN,
+                    "El técnico no está activo.");
+            }
+
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(appointment =>
+                    appointment.Id == appointmentId &&
+                    appointment.TechnicianId == technicianId);
+
+            if (appointment is null)
+            {
+                return Error<AppointmentActionResponseDto>(
+                    HttpStatusCode.NOT_FOUND,
+                    "No se encontró una cita asignada al técnico.");
+            }
+
+            var nextStatus = dto.Status.Value;
+
+            if (nextStatus == AppointmentStatus.Pending ||
+                nextStatus == AppointmentStatus.Cancelled)
+            {
+                return Error<AppointmentActionResponseDto>(
+                    HttpStatusCode.BAD_REQUEST,
+                    "El técnico no puede establecer ese estado.");
+            }
+
+            if (!IsValidStatusTransition(
+                    appointment.Status,
+                    nextStatus))
+            {
+                return Error<AppointmentActionResponseDto>(
+                    HttpStatusCode.BAD_REQUEST,
+                    "El cambio de estado no es válido.");
+            }
+
+            appointment.Status = nextStatus;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                return SuccessAction(
+                    HttpStatusCode.OK,
+                    "Estado de la cita actualizado correctamente.",
+                    appointment.Id);
+            }
+            catch
+            {
+                return InternalServerError();
+            }
         }
 
         private async Task<SlotValidationResult> ValidateSlotAsync(
@@ -461,7 +574,7 @@ namespace AutoCare_Club_Api.Services.Appointments
         {
             public TimeOnly EndTime { get; private set; }
 
-            public ResponseDto< AppointmentActionResponseDto>? Error
+            public ResponseDto<AppointmentActionResponseDto>? Error
             { get; private set; }
 
             public static SlotValidationResult Succeeded(

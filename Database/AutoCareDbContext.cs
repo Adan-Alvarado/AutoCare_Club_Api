@@ -48,6 +48,13 @@ namespace AutoCare_Club.Api.Database
                     .HasConversion<string>()
                     .HasMaxLength(20);
 
+                entity.Property(order => order.PaymentStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(order => order.StripePaymentIntentId)
+                    .HasMaxLength(255);
+
                 entity.Property(order => order.AppointmentId)
                     .HasMaxLength(36);
 
@@ -58,6 +65,10 @@ namespace AutoCare_Club.Api.Database
                 entity.HasIndex(order => order.AppointmentId)
                     .IsUnique()
                     .HasFilter("\"AppointmentId\" IS NOT NULL");
+
+                entity.HasIndex(order => order.StripePaymentIntentId)
+                    .IsUnique()
+                    .HasFilter("\"StripePaymentIntentId\" IS NOT NULL");
 
                 entity.HasOne<UserEntity>()
                     .WithMany()
@@ -102,6 +113,15 @@ namespace AutoCare_Club.Api.Database
                     .HasForeignKey(item => item.ServiceId)
                     .IsRequired()
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<StripeWebhookEventEntity>(entity =>
+            {
+                entity.Property(webhookEvent => webhookEvent.Id)
+                    .HasMaxLength(255);
+
+                entity.Property(webhookEvent => webhookEvent.EventType)
+                    .HasMaxLength(100);
             });
 
             builder.Entity<AppointmentEntity>(entity =>
@@ -178,6 +198,8 @@ namespace AutoCare_Club.Api.Database
         public DbSet<VehicleEntity> Vehicles { get; set; }
         public DbSet<OrderEntity> Orders { get; set; }
         public DbSet<OrderItemEntity> OrderItems { get; set; }
+        public DbSet<StripeWebhookEventEntity> StripeWebhookEvents
+            { get; set; }
         public DbSet<ScheduleEntity> Schedules { get; set; }
         public DbSet<AppointmentEntity> Appointments { get; set; }
         public DbSet<TechnicianEntity> Technicians { get; set; }

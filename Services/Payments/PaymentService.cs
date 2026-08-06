@@ -281,6 +281,99 @@ namespace AutoCare_Club.Api.Services.Payments
             }
         }
 
+        public async Task<ResponseDto<CheckoutSessionDto>>
+            VerifyCheckoutSessionAsync(string sessionId)
+        {
+            if (string.IsNullOrWhiteSpace(sessionId))
+            {
+                return Error<CheckoutSessionDto>(
+                    ApiStatusCode.BAD_REQUEST,
+                    "El identificador de la sesion no es valido");
+            }
+
+            string secretKey =
+                _configuration["Stripe:SecretKey"] ?? string.Empty;
+            string publishableKey =
+                _configuration["Stripe:PublishableKey"] ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(secretKey))
+            {
+                return Error<CheckoutSessionDto>(
+                    ApiStatusCode.SERVICE_UNAVAILABLE,
+                    "Stripe todavia no esta configurado");
+            }
+
+            var stripeClient = new StripeClient(secretKey);
+            var sessionService = new SessionService(stripeClient);
+
+            try
+            {
+                Session session = await sessionService.GetAsync(sessionId);
+
+                string? orderId = null;
+                if (session.Metadata != null && session.Metadata.TryGetValue("orderId", out string? val))
+                {
+                    orderId = val;
+                }
+                orderId ??= session.ClientReferenceId;
+
+                OrderEntity? order = null;
+                if (!string.IsNullOrEmpty(orderId))
+                {
+                    order = await _context.Orders
+                        .FirstOrDefaultAsync(o => o.Id == orderId);
+                }
+
+                order ??= await _context.Orders
+                    .FirstOrDefaultAsync(o =>
+                        o.StripePaymentIntentId == session.Id
+                        || (session.PaymentIntentId != null && o.StripePaymentIntentId == session.PaymentIntentId));
+
+                if (order == null)
+                {
+                    return Error<CheckoutSessionDto>(
+                        ApiStatusCode.NOT_FOUND,
+                        "No se encontro la orden asociada a la sesion");
+                }
+
+                order.PaymentStatus = session.PaymentStatus;
+                if (session.PaymentStatus == "paid" || session.Status == "complete")
+                {
+                    order.Status = OrderStatus.Paid;
+                    order.PaidAt ??= DateTime.UtcNow;
+                    if (!string.IsNullOrEmpty(session.PaymentIntentId))
+                    {
+                        order.StripePaymentIntentId = session.PaymentIntentId;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                var dto = new CheckoutSessionDto
+                {
+                    SessionId = session.Id,
+                    Url = session.Url ?? string.Empty,
+                    PublishableKey = publishableKey,
+                    Amount = order.Total,
+                    Currency = GetCurrency(),
+                    Status = session.PaymentStatus
+                };
+
+                return Success(dto, "Estado del pago verificado correctamente");
+            }
+            catch (StripeException exception)
+            {
+                _logger.LogError(
+                    exception,
+                    "Error al verificar la sesion de Stripe Checkout {SessionId}.",
+                    sessionId);
+
+                return Error<CheckoutSessionDto>(
+                    ApiStatusCode.BAD_GATEWAY,
+                    "No fue posible comunicarse con Stripe");
+            }
+        }
+
         public async Task<ResponseDto<bool>> ProcessWebhookAsync(
             string payload,
             string signature)

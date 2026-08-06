@@ -65,6 +65,16 @@ namespace AutoCare_Club.Api.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
+        [HttpPost("sessions/{sessionId}/verify")]
+        public async Task<ActionResult<ResponseDto<CheckoutSessionDto>>>
+            VerifyCheckoutSession(string sessionId)
+        {
+            ResponseDto<CheckoutSessionDto> response =
+                await _paymentService.VerifyCheckoutSessionAsync(sessionId);
+
+            return StatusCode(response.StatusCode, response);
+        }
+
         private string? GetAuthenticatedUserId()
         {
             string? userId =

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AutoCare_Club.Api.Constants;
 using AutoCare_Club_Api.Dtos.Common;
 using AutoCare_Club_Api.Dtos.Schedules;
@@ -94,10 +95,17 @@ namespace AutoCare_Club_Api.Controllers
                 [FromQuery] string serviceId,
                 [FromQuery] DateOnly date)
         {
+            string? userId =
+                User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("UserId");
+
             var response =
                 await _scheduleService.GetAvailableAsync(
                     serviceId,
-                    date);
+                    date,
+                    Guid.TryParse(userId, out _)
+                        ? userId
+                        : null);
 
             return StatusCode(
                 response.StatusCode,

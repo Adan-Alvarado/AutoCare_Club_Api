@@ -15,6 +15,10 @@ namespace AutoCare_Club_Api.Services.Schedules
 
         Task<ResponseDto<ScheduleActionResponseDto>> DeleteAsync(string id);
 
-        Task<ResponseDto<List<ScheduleAvailabilityDto>>> GetAvailableAsync(string serviceId, DateOnly date);
+        Task<ResponseDto<List<ScheduleAvailabilityDto>>>
+            GetAvailableAsync(
+                string serviceId,
+                DateOnly date,
+                string? userId);
     }
 }

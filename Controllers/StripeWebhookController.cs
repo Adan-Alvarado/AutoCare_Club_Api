@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AutoCare_Club.Api.Controllers
 {
     [ApiController]
-    [Route("api/stripe/webhook")]
+    [Route("api/payments/webhook")]
     [AllowAnonymous]
     public class StripeWebhookController : ControllerBase
     {

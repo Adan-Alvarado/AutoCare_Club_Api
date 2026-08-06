@@ -32,22 +32,29 @@ namespace AutoCare_Club.Api.Mappers
         }
 
         public static List<UserDto> ListEntityToListDto(
-            IEnumerable<UserEntity> entities)
+            IEnumerable<UserEntity> entities,
+            IReadOnlyDictionary<string, List<string>>? rolesByUserId = null)
         {
             return entities
-                .Select(EntityToDto)
+                .Select(entity => EntityToDto(entity, rolesByUserId?.TryGetValue(entity.Id, out var roles) == true ? roles : null))
                 .ToList();
         }
 
         public static UserDto EntityToDto(
-            UserEntity entity)
+            UserEntity entity,
+            IEnumerable<string>? roles = null)
         {
             return new UserDto
             {
                 Id = entity.Id,
                 FirstName = entity.FirstName,
                 LastName = entity.LastName,
-                 Email = entity.Email ?? string.Empty,
+                Email = entity.Email ?? string.Empty,
+                Roles = roles?
+                    .Where(role => !string.IsNullOrWhiteSpace(role))
+                    .Select(role => role.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList() ?? new List<string>(),
                 CreatedAt = entity.CreatedAt
             };
         }

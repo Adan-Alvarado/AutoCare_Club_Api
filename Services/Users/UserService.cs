@@ -76,6 +76,14 @@ namespace AutoCare_Club_Api.Services.Users
                 .Take(pageSize)
                 .ToListAsync();
 
+            var rolesByUserId = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var userEntity in userEntities)
+            {
+                var roles = await _userManager.GetRolesAsync(userEntity);
+                rolesByUserId[userEntity.Id] = roles.ToList();
+            }
+
             return new ResponseDto<PageDto<List<UserDto>>>
             {
                 StatusCode = HttpStatusCode.OK,
@@ -87,7 +95,7 @@ namespace AutoCare_Club_Api.Services.Users
                     PageSize = pageSize,
                     TotalItems = totalRows,
                     TotalPages = totalPages,
-                    Items = UserMapper.ListEntityToListDto(userEntities),
+                    Items = UserMapper.ListEntityToListDto(userEntities, rolesByUserId),
                     HasNextPage = page < totalPages,
                     HasPreviousPage = page > 1
                 }
@@ -110,12 +118,14 @@ namespace AutoCare_Club_Api.Services.Users
                 };
             }
 
+            var roles = await _userManager.GetRolesAsync(userEntity);
+
             return new ResponseDto<UserDto>
             {
                 StatusCode = HttpStatusCode.OK,
                 Message = "Usuario encontrado correctamente.",
                 Status = true,
-                Data = UserMapper.EntityToDto(userEntity)
+                Data = UserMapper.EntityToDto(userEntity, roles)
             };
         }
 

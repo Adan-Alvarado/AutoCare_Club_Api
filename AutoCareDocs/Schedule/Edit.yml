@@ -1,0 +1,26 @@
+info:
+  name: Edit
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/schedules/6e15c9e0-4902-4348-aaf3-4285fc1a6753"
+  body:
+    type: json
+    data: |-
+      {
+        "dayOfWeek": 2,
+          "startTime": "16:00:00",
+          "endTime": "17:00:00",
+        "isAvailable": true
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

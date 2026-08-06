@@ -1,0 +1,10 @@
+name: Development
+variables:
+  - name: baseUrl
+    value: http://localhost:5172
+  - secret: true
+    name: token
+    description: ""
+  - secret: true
+    name: refreshToken
+    description: ""

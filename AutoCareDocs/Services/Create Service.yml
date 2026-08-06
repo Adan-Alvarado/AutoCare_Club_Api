@@ -1,0 +1,30 @@
+info:
+  name: Create Service
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/services"
+  headers:
+    - name: Authorization
+      value: Bearer  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjQxODc1NTg3LTEzZTItNDUxMy1iOGM1LTZmNzc4YTJiNjBmNSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGF1dG9jYXJlLmNvbSIsImp0aSI6IjJmMTc3MzIwLWJlY2UtNGFkZS04ODdmLWU1ODYyYWNjZjlhNCIsIlVzZXJJZCI6IjQxODc1NTg3LTEzZTItNDUxMy1iOGM1LTZmNzc4YTJiNjBmNSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwibmJmIjoxNzg1OTc0MTk1LCJleHAiOjE3ODU5ODEzOTUsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6NzIzOSIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTE3MyJ9.iQnpKzzTH2AR70l1dFjaKAsMSbNV9jxWMzHRcYzTG7s
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Revision General",
+        "description": "Revision de todo el carro",
+        "price": 800.00,
+        "durationMinutes": 60,
+        "imageUrl": null
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

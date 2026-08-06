@@ -1,0 +1,26 @@
+info:
+  name: Create
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/vehicles"
+  body:
+    type: json
+    data: |-
+      {
+        "brand": "Toyota",
+        "year": 2025,
+        "licensePlate": "ABC12345",
+        "vehicleType": "Pick-Up"
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

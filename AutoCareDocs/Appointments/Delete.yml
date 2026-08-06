@@ -1,0 +1,21 @@
+info:
+  name: Delete
+  type: http
+  seq: 1
+
+http:
+  method: DELETE
+  url: http://localhost:5172/api/appointments/93e5bff2-355f-4e22-9904-e4f420c29957
+  headers:
+    - name: Authorization
+      value: Bearer   eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjQxODc1NTg3LTEzZTItNDUxMy1iOGM1LTZmNzc4YTJiNjBmNSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGF1dG9jYXJlLmNvbSIsImp0aSI6IjRkM2RmNDllLTY1YTAtNGMxMS1hMzdiLTk0M2JmNjE0MGM3ZCIsIlVzZXJJZCI6IjQxODc1NTg3LTEzZTItNDUxMy1iOGM1LTZmNzc4YTJiNjBmNSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwibmJmIjoxNzg1OTg5MTQ2LCJleHAiOjE3ODU5OTYzNDYsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6NzIzOSIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTE3MyJ9.5EA1dQOPUUNY7vMgXD-v8r9Tg1H9hHf7FYjOv7g6dPQ
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

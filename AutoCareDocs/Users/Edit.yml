@@ -1,0 +1,31 @@
+info:
+  name: Edit
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/users/f5df0226-1d98-4320-ac9c-6f1a8ea8d5ff"
+  body:
+    type: json
+    data: |-
+      {
+        "changePassword": true,
+        "firstName": "Prueba",
+        "lastName": "t",
+        "email": "pt@gmail.com",
+        "roles": [
+          "Customer"
+        ],
+        "password": "Joseph123!",
+        "confirmPassword": "Joseph123!"
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -42,23 +42,6 @@ namespace AutoCare_Club.Api.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
-        [AllowAnonymous]
-        [HttpPost("webhook")]
-        public async Task<IActionResult> Webhook()
-        {
-            using var reader = new StreamReader(Request.Body);
-            string payload = await reader.ReadToEndAsync();
-            string signature = Request.Headers["Stripe-Signature"]
-                .ToString();
-
-            ResponseDto<bool> response =
-                await _paymentService.ProcessWebhookAsync(
-                    payload,
-                    signature);
-
-            return StatusCode(response.StatusCode, response);
-        }
-
         private string? GetAuthenticatedUserId()
         {
             string? userId =

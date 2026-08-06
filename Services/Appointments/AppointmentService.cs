@@ -188,23 +188,37 @@ namespace AutoCare_Club_Api.Services.Appointments
                 }
             }
 
-            var validation = await ValidateSlotAsync(
-                appointment.UserId,
-                dto.VehicleId,
-                dto.ServiceId,
-                dto.AppointmentDate,
-                dto.StartTime,
-                appointment.Id);
+            bool scheduleChanged =
+                appointment.VehicleId != dto.VehicleId
+                || appointment.ServiceId != dto.ServiceId
+                || appointment.AppointmentDate
+                    != dto.AppointmentDate
+                || appointment.StartTime != dto.StartTime;
 
-            if (validation.Error is not null)
+            TimeOnly endTime = appointment.EndTime;
+
+            if (scheduleChanged)
             {
-                return validation.Error;
+                var validation = await ValidateSlotAsync(
+                    appointment.UserId,
+                    dto.VehicleId,
+                    dto.ServiceId,
+                    dto.AppointmentDate,
+                    dto.StartTime,
+                    appointment.Id);
+
+                if (validation.Error is not null)
+                {
+                    return validation.Error;
+                }
+
+                endTime = validation.EndTime;
             }
 
             AppointmentMapper.EditDtoToEntity(
                 appointment,
                 dto,
-                validation.EndTime);
+                endTime);
 
             try
             {

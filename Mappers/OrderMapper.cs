@@ -13,6 +13,8 @@ namespace AutoCare_Club.Api.Mappers
                 VehicleId = entity.VehicleId,
                 AppointmentId = entity.AppointmentId,
                 Total = entity.Total,
+                TotalDurationMinutes = entity.Items.Sum(item =>
+                    item.Service.DurationMinutes * item.Quantity),
                 Status = entity.Status.ToString(),
                 PaymentStatus = entity.PaymentStatus,
                 PaidAt = entity.PaidAt,

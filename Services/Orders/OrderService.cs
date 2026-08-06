@@ -4,6 +4,7 @@ using AutoCare_Club.Api.Entities;
 using AutoCare_Club.Api.Mappers;
 using AutoCare_Club_Api.Dtos.Common;
 using AutoCare_Club_Api.Entities;
+using AutoCare_Club_Api.Services.Schedules;
 using Microsoft.EntityFrameworkCore;
 using ApiStatusCode = AutoCare_Club.Api.Constants.HttpStatusCode;
 
@@ -236,7 +237,6 @@ namespace AutoCare_Club.Api.Services.Orders
             if (!string.IsNullOrWhiteSpace(dto.AppointmentId))
             {
                 appointment = await _context.Appointments
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(appointment =>
                         appointment.Id == dto.AppointmentId
                         && appointment.UserId == userId);
@@ -289,6 +289,28 @@ namespace AutoCare_Club.Api.Services.Orders
                     "El carrito contiene servicios que ya no están activos.");
             }
 
+            if (order.Items.Any(item =>
+                item.Service.DurationMinutes <= 0))
+            {
+                return Error<OrderDto>(
+                    ApiStatusCode.BAD_REQUEST,
+                    "El carrito contiene servicios sin una duración válida.");
+            }
+
+            int totalDurationMinutes;
+
+            try
+            {
+                totalDurationMinutes = CalculateTotalDurationMinutes(
+                    order);
+            }
+            catch (OverflowException)
+            {
+                return Error<OrderDto>(
+                    ApiStatusCode.BAD_REQUEST,
+                    "La duración total de la orden no es válida.");
+            }
+
             if (appointment is not null
                 && !order.Items.Any(item =>
                     item.ServiceId == appointment.ServiceId))
@@ -300,6 +322,16 @@ namespace AutoCare_Club.Api.Services.Orders
 
             if (appointment is not null)
             {
+                var durationValidation =
+                    await ValidateAppointmentDurationAsync(
+                        appointment,
+                        totalDurationMinutes);
+
+                if (durationValidation.Error is not null)
+                {
+                    return durationValidation.Error;
+                }
+
                 bool appointmentAlreadyUsed = await _context.Orders
                     .AsNoTracking()
                     .AnyAsync(existingOrder =>
@@ -312,6 +344,8 @@ namespace AutoCare_Club.Api.Services.Orders
                         ApiStatusCode.CONFLICT,
                         "La cita ya está relacionada con otra orden.");
                 }
+
+                appointment.EndTime = durationValidation.EndTime;
             }
 
             order.VehicleId = dto.VehicleId;
@@ -418,6 +452,94 @@ namespace AutoCare_Club.Api.Services.Orders
             order.Total = order.Items.Sum(item => item.Subtotal);
         }
 
+        private static int CalculateTotalDurationMinutes(
+            OrderEntity order)
+        {
+            return order.Items.Aggregate(
+                0,
+                (total, item) => checked(
+                    total + checked(
+                        item.Service.DurationMinutes
+                        * item.Quantity)));
+        }
+
+        private async Task<AppointmentDurationValidationResult>
+            ValidateAppointmentDurationAsync(
+                AppointmentEntity appointment,
+                int totalDurationMinutes)
+        {
+            DateTime startDateTime = appointment.AppointmentDate
+                .ToDateTime(appointment.StartTime);
+
+            if (startDateTime <= DateTime.Now)
+            {
+                return AppointmentDurationValidationResult.Failed(
+                    Error<OrderDto>(
+                        ApiStatusCode.BAD_REQUEST,
+                        "No se puede confirmar una orden con una cita pasada."));
+            }
+
+            DateTime endDateTime = startDateTime.AddMinutes(
+                totalDurationMinutes);
+
+            if (DateOnly.FromDateTime(endDateTime)
+                != appointment.AppointmentDate)
+            {
+                return AppointmentDurationValidationResult.Failed(
+                    Error<OrderDto>(
+                        ApiStatusCode.BAD_REQUEST,
+                        "La duración total de los servicios no puede terminar en otro día."));
+            }
+
+            TimeOnly endTime = TimeOnly.FromDateTime(endDateTime);
+
+            List<ScheduleEntity> schedules = await _context.Schedules
+                .AsNoTracking()
+                .Where(schedule =>
+                    schedule.IsAvailable
+                    && schedule.DayOfWeek
+                        == appointment.AppointmentDate.DayOfWeek)
+                .ToListAsync();
+
+            bool isInsideSchedule = ScheduleIntervalHelper
+                .Merge(schedules)
+                .Any(schedule =>
+                    schedule.StartTime <= appointment.StartTime
+                    && schedule.EndTime >= endTime);
+
+            if (!isInsideSchedule)
+            {
+                return AppointmentDurationValidationResult.Failed(
+                    Error<OrderDto>(
+                        ApiStatusCode.BAD_REQUEST,
+                        "La duración total de los servicios no cabe en el horario seleccionado."));
+            }
+
+            bool overlapsAnotherAppointment =
+                await _context.Appointments
+                    .AsNoTracking()
+                    .AnyAsync(existing =>
+                        existing.Id != appointment.Id
+                        && existing.AppointmentDate
+                            == appointment.AppointmentDate
+                        && existing.Status
+                            != AppointmentStatus.Cancelled
+                        && existing.StartTime < endTime
+                        && existing.EndTime
+                            > appointment.StartTime);
+
+            if (overlapsAnotherAppointment)
+            {
+                return AppointmentDurationValidationResult.Failed(
+                    Error<OrderDto>(
+                        ApiStatusCode.CONFLICT,
+                        "La duración total de los servicios se cruza con otra cita."));
+            }
+
+            return AppointmentDurationValidationResult.Succeeded(
+                endTime);
+        }
+
         private static ResponseDto<T> Success<T>(
             T data,
             string message,
@@ -442,6 +564,32 @@ namespace AutoCare_Club.Api.Services.Orders
                 Status = false,
                 Message = message
             };
+        }
+
+        private sealed class AppointmentDurationValidationResult
+        {
+            public TimeOnly EndTime { get; private init; }
+
+            public ResponseDto<OrderDto>? Error
+                { get; private init; }
+
+            public static AppointmentDurationValidationResult
+                Succeeded(TimeOnly endTime)
+            {
+                return new AppointmentDurationValidationResult
+                {
+                    EndTime = endTime
+                };
+            }
+
+            public static AppointmentDurationValidationResult
+                Failed(ResponseDto<OrderDto> error)
+            {
+                return new AppointmentDurationValidationResult
+                {
+                    Error = error
+                };
+            }
         }
     }
 }

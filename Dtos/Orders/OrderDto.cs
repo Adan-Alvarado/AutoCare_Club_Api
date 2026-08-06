@@ -6,6 +6,7 @@ namespace AutoCare_Club.Api.Dtos.Orders
         public string? VehicleId { get; set; }
         public string? AppointmentId { get; set; }
         public decimal Total { get; set; }
+        public int TotalDurationMinutes { get; set; }
         public string Status { get; set; } = string.Empty;
         public string PaymentStatus { get; set; } = string.Empty;
         public DateTime? PaidAt { get; set; }

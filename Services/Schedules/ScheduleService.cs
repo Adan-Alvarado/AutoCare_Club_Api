@@ -1,5 +1,6 @@
 using AutoCare_Club.Api.Constants;
 using AutoCare_Club.Api.Database;
+using AutoCare_Club.Api.Entities;
 using AutoCare_Club_Api.Dtos.Common;
 using AutoCare_Club_Api.Dtos.Schedules;
 using AutoCare_Club_Api.Entities;
@@ -185,7 +186,11 @@ namespace AutoCare_Club_Api.Services.Schedules
             };
         }
 
-        public async Task<ResponseDto<List<ScheduleAvailabilityDto>>> GetAvailableAsync(string serviceId, DateOnly date)
+        public async Task<ResponseDto<List<ScheduleAvailabilityDto>>>
+            GetAvailableAsync(
+                string serviceId,
+                DateOnly date,
+                string? userId)
         {
             var service = await _context.Services
        .AsNoTracking()
@@ -215,7 +220,66 @@ namespace AutoCare_Club_Api.Services.Schedules
                 };
             }
 
-            if (service.DurationMinutes <= 0)
+            int durationMinutes = service.DurationMinutes;
+
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                var cartItems = await _context.Orders
+                    .AsNoTracking()
+                    .Where(order =>
+                        order.UserId == userId
+                        && order.Status == OrderStatus.Draft
+                        && order.Items.Any(item =>
+                            item.ServiceId == serviceId))
+                    .SelectMany(order => order.Items)
+                    .Select(item => new
+                    {
+                        item.Quantity,
+                        item.Service.DurationMinutes,
+                        item.Service.IsActive
+                    })
+                    .ToListAsync();
+
+                if (cartItems.Count > 0)
+                {
+                    if (cartItems.Any(item =>
+                        !item.IsActive
+                        || item.DurationMinutes <= 0))
+                    {
+                        return new ResponseDto<
+                            List<ScheduleAvailabilityDto>>
+                        {
+                            StatusCode = HttpStatusCode.BAD_REQUEST,
+                            Status = false,
+                            Message =
+                                "El carrito contiene servicios sin una duración válida."
+                        };
+                    }
+
+                    try
+                    {
+                        durationMinutes = cartItems.Aggregate(
+                            0,
+                            (total, item) => checked(
+                                total + checked(
+                                    item.DurationMinutes
+                                    * item.Quantity)));
+                    }
+                    catch (OverflowException)
+                    {
+                        return new ResponseDto<
+                            List<ScheduleAvailabilityDto>>
+                        {
+                            StatusCode = HttpStatusCode.BAD_REQUEST,
+                            Status = false,
+                            Message =
+                                "La duración total del carrito no es válida."
+                        };
+                    }
+                }
+            }
+
+            if (durationMinutes <= 0)
             {
                 return new ResponseDto<List<ScheduleAvailabilityDto>>
                 {
@@ -233,6 +297,9 @@ namespace AutoCare_Club_Api.Services.Schedules
                 .OrderBy(schedule => schedule.StartTime)
                 .ToListAsync();
 
+            IReadOnlyList<ScheduleInterval> scheduleIntervals =
+                ScheduleIntervalHelper.Merge(schedules);
+
             var reservedAppointments =
                 await _context.Appointments
                     .AsNoTracking()
@@ -247,7 +314,7 @@ namespace AutoCare_Club_Api.Services.Schedules
             var availableSlots =
                 new List<ScheduleAvailabilityDto>();
 
-            foreach (var schedule in schedules)
+            foreach (ScheduleInterval schedule in scheduleIntervals)
             {
                 var slotStart =
                     date.ToDateTime(schedule.StartTime);
@@ -256,10 +323,10 @@ namespace AutoCare_Club_Api.Services.Schedules
                     date.ToDateTime(schedule.EndTime);
 
                 while (slotStart.AddMinutes(
-                    service.DurationMinutes) <= scheduleEnd)
+                    durationMinutes) <= scheduleEnd)
                 {
                     var slotEnd = slotStart.AddMinutes(
-                        service.DurationMinutes);
+                        durationMinutes);
 
                     var slotStartTime =
                         TimeOnly.FromDateTime(slotStart);

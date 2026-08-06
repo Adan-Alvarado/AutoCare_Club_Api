@@ -3,6 +3,7 @@ using AutoCare_Club.Api.Dtos.Payments;
 using AutoCare_Club.Api.Entities;
 using AutoCare_Club_Api.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Stripe;
 using ApiStatusCode = AutoCare_Club.Api.Constants.HttpStatusCode;
 
@@ -14,13 +15,16 @@ namespace AutoCare_Club.Api.Services.Payments
 
         private readonly AutoCareDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<PaymentService> _logger;
 
         public PaymentService(
             AutoCareDbContext context,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<PaymentService> logger)
         {
             _context = context;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<ResponseDto<PaymentIntentDto>>
@@ -135,8 +139,13 @@ namespace AutoCare_Club.Api.Services.Payments
                         currency),
                     "Pago preparado correctamente");
             }
-            catch (StripeException)
+            catch (StripeException exception)
             {
+                _logger.LogError(
+                    exception,
+                    "Stripe no pudo preparar el pago para la orden {OrderId}.",
+                    orderId);
+
                 return Error<PaymentIntentDto>(
                     ApiStatusCode.BAD_GATEWAY,
                     "No fue posible comunicarse con Stripe");
@@ -166,11 +175,26 @@ namespace AutoCare_Club.Api.Services.Payments
                     signature,
                     webhookSecret);
             }
-            catch (StripeException)
+            catch (StripeException exception)
             {
+                _logger.LogWarning(
+                    exception,
+                    "Stripe envio un webhook con una firma invalida.");
+
                 return Error<bool>(
                     ApiStatusCode.BAD_REQUEST,
                     "La firma del webhook no es valida");
+            }
+
+            bool alreadyProcessed =
+                await _context.StripeWebhookEvents
+                    .AsNoTracking()
+                    .AnyAsync(webhookEvent =>
+                        webhookEvent.Id == stripeEvent.Id);
+
+            if (alreadyProcessed)
+            {
+                return Success(true, "Evento procesado anteriormente");
             }
 
             if (stripeEvent.Data.Object is not PaymentIntent paymentIntent)
@@ -182,7 +206,8 @@ namespace AutoCare_Club.Api.Services.Payments
                 && stripeEvent.Type
                     != EventTypes.PaymentIntentPaymentFailed
                 && stripeEvent.Type
-                    != EventTypes.PaymentIntentCanceled)
+                    != EventTypes.PaymentIntentCanceled
+                && stripeEvent.Type != "payment_intent.processing")
             {
                 return Success(true, "Evento recibido");
             }
@@ -193,6 +218,10 @@ namespace AutoCare_Club.Api.Services.Payments
 
             if (order is null)
             {
+                _logger.LogWarning(
+                    "No se encontro una orden para el PaymentIntent {PaymentIntentId}.",
+                    paymentIntent.Id);
+
                 return Success(
                     true,
                     "El evento no corresponde a una orden registrada");
@@ -211,6 +240,11 @@ namespace AutoCare_Club.Api.Services.Payments
 
                 if (!validAmount || !validCurrency)
                 {
+                    _logger.LogWarning(
+                        "El pago {PaymentIntentId} no coincide con el monto o moneda de la orden {OrderId}.",
+                        paymentIntent.Id,
+                        order.Id);
+
                     return Error<bool>(
                         ApiStatusCode.BAD_REQUEST,
                         "El monto o la moneda del pago no coincide con la orden");
@@ -220,7 +254,28 @@ namespace AutoCare_Club.Api.Services.Payments
                 order.PaidAt ??= DateTime.UtcNow;
             }
 
-            await _context.SaveChangesAsync();
+            await _context.StripeWebhookEvents.AddAsync(
+                new StripeWebhookEventEntity
+                {
+                    Id = stripeEvent.Id,
+                    EventType = stripeEvent.Type
+                });
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException exception) when (
+                exception.InnerException is PostgresException
+                {
+                    SqlState: PostgresErrorCodes.UniqueViolation,
+                    ConstraintName: "PK_StripeWebhookEvents"
+                })
+            {
+                _logger.LogInformation(
+                    "El evento Stripe {EventId} ya habia sido procesado.",
+                    stripeEvent.Id);
+            }
 
             return Success(true, "Evento procesado correctamente");
         }

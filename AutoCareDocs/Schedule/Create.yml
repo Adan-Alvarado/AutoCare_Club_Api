@@ -1,0 +1,26 @@
+info:
+  name: Create
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/schedules"
+  body:
+    type: json
+    data: |-
+      {
+        "dayOfWeek": 2,
+        "startTime": "16:00:00",
+        "endTime": "17:00:00",
+        "isAvailable": true
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

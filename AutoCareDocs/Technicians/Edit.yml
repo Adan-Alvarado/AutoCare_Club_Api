@@ -1,0 +1,24 @@
+info:
+  name: Edit
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/technicians/aa633402-6e61-4df8-a62f-e1a617bb4fae"
+  body:
+    type: json
+    data: |-
+      {
+        "specialty": "",
+        "isActive": true
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

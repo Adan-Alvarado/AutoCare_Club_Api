@@ -1,0 +1,17 @@
+info:
+  name: Get by Id
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: http://localhost:5172/api/appointments/55743009-3abb-47d0-b2d0-162d15adb86f
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

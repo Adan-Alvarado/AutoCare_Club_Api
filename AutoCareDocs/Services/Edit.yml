@@ -1,0 +1,28 @@
+info:
+  name: Edit
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/services/683311e2-4b9d-45d2-8adb-4db59f7c6b42"
+  body:
+    type: json
+    data: |-
+      {
+        "isActive": true,
+        "name": "Electricidad",
+        "description": "Revision Electiricidad del Vehiculo",
+        "price": 800.00,
+        "durationMinutes": 60,
+        "imageUrl": null
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

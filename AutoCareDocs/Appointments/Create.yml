@@ -1,0 +1,27 @@
+info:
+  name: Create
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:5172/api/appointments
+  body:
+    type: json
+    data: |-
+      {
+        "vehicleId": "",
+        "serviceId": "",
+        "appointmentDate": "",
+        "startTime": "",
+        "notes": null
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,17 @@
+info:
+  name: Get Appointment me
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://localhost:5172/api/appointments/me
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEzOTBiNWI1LWU2MmItNDljYy04ODMwLWZhZGIyZTdhNmY4YSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImNjQGdtYWlsLmNvbSIsImp0aSI6IjU2ODI2ZGYyLTc0ZGMtNGNhZi04YmUyLTEwN2RhYTVjNDEyYyIsIlVzZXJJZCI6IjEzOTBiNWI1LWU2MmItNDljYy04ODMwLWZhZGIyZTdhNmY4YSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkN1c3RvbWVyIiwibmJmIjoxNzg2MDU3OTQxLCJleHAiOjE3ODYwNjUxNDEsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6NzIzOSIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTE3MyJ9.Awei_ZUS6AQpBMf1Z3ALFi8NPPw8BB5ICUk4zY-ukAE
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

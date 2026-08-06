@@ -1,0 +1,26 @@
+info:
+  name: Edit
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/vehicles/be328927-c32d-4f82-9fa6-99a198dda6db"
+  body:
+    type: json
+    data: |-
+      {
+        "brand": "Toyota Hilux",
+        "year": 2025,
+        "licensePlate": "ABC12345",
+        "vehicleType": "Pick-Up"
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

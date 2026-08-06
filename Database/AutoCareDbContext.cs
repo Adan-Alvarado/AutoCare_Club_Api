@@ -115,6 +115,15 @@ namespace AutoCare_Club.Api.Database
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            builder.Entity<StripeWebhookEventEntity>(entity =>
+            {
+                entity.Property(webhookEvent => webhookEvent.Id)
+                    .HasMaxLength(255);
+
+                entity.Property(webhookEvent => webhookEvent.EventType)
+                    .HasMaxLength(100);
+            });
+
             builder.Entity<AppointmentEntity>(entity =>
             {
 
@@ -189,6 +198,8 @@ namespace AutoCare_Club.Api.Database
         public DbSet<VehicleEntity> Vehicles { get; set; }
         public DbSet<OrderEntity> Orders { get; set; }
         public DbSet<OrderItemEntity> OrderItems { get; set; }
+        public DbSet<StripeWebhookEventEntity> StripeWebhookEvents
+            { get; set; }
         public DbSet<ScheduleEntity> Schedules { get; set; }
         public DbSet<AppointmentEntity> Appointments { get; set; }
         public DbSet<TechnicianEntity> Technicians { get; set; }

@@ -42,6 +42,29 @@ namespace AutoCare_Club.Api.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
+        [HttpPost("orders/{orderId:guid}/checkout-session")]
+        public async Task<ActionResult<ResponseDto<CheckoutSessionDto>>>
+            CreateCheckoutSession(string orderId)
+        {
+            string? userId = GetAuthenticatedUserId();
+
+            if (userId is null)
+            {
+                return Unauthorized(new ResponseDto<CheckoutSessionDto>
+                {
+                    Status = false,
+                    Message = "El token no contiene un usuario valido"
+                });
+            }
+
+            ResponseDto<CheckoutSessionDto> response =
+                await _paymentService.CreateCheckoutSessionAsync(
+                    userId,
+                    orderId);
+
+            return StatusCode(response.StatusCode, response);
+        }
+
         private string? GetAuthenticatedUserId()
         {
             string? userId =

@@ -1,7 +1,9 @@
 using AutoCare_Club.Api.Constants;
+using AutoCare_Club.Api.Database;
 using AutoCare_Club.Api.Entities;
 using AutoCare_Club_Api.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoCare_Club_Api.Database
 {
@@ -19,10 +21,16 @@ namespace AutoCare_Club_Api.Database
             var userManager = scope.ServiceProvider
                 .GetRequiredService<UserManager<UserEntity>>();
 
+            var context = scope.ServiceProvider
+                .GetRequiredService<AutoCareDbContext>();
+
             await CreateRolesAsync(roleManager);
             await CreateAdminAsync(
                 userManager,
                 configuration);
+            await EnsureMissingTechnicianProfilesAsync(
+                userManager,
+                context);
         }
 
         private static async Task CreateRolesAsync(
@@ -135,6 +143,57 @@ namespace AutoCare_Club_Api.Database
                                 error => error.Description)));
                 }
             }
+        }
+
+        private static async Task EnsureMissingTechnicianProfilesAsync(
+            UserManager<UserEntity> userManager,
+            AutoCareDbContext context)
+        {
+            var technicianUsers = await userManager
+                .GetUsersInRoleAsync(RolesConstant.Technician);
+
+            var activeTechnicianUsers = technicianUsers
+                .Where(user => user.IsActive)
+                .ToList();
+
+            if (activeTechnicianUsers.Count == 0)
+            {
+                return;
+            }
+
+            var technicianUserIds = activeTechnicianUsers
+                .Select(user => user.Id)
+                .ToList();
+
+            var existingProfileIds = await context.Technicians
+                .AsNoTracking()
+                .Where(profile =>
+                    technicianUserIds.Contains(profile.UserId))
+                .Select(profile => profile.UserId)
+                .ToListAsync();
+
+            var existingProfileIdSet = existingProfileIds
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var missingProfiles = activeTechnicianUsers
+                .Where(user =>
+                    !existingProfileIdSet.Contains(user.Id))
+                .Select(user => new TechnicianEntity
+                {
+                    UserId = user.Id,
+                    Specialty = "General",
+                    IsActive = true
+                })
+                .ToList();
+
+            if (missingProfiles.Count == 0)
+            {
+                return;
+            }
+
+            await context.Technicians.AddRangeAsync(
+                missingProfiles);
+            await context.SaveChangesAsync();
         }
     }
 }

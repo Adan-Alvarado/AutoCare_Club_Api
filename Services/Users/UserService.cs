@@ -165,8 +165,21 @@ namespace AutoCare_Club_Api.Services.Users
                         await transaction.RollbackAsync();
                         return IdentityErrorResponse(addRolesResult);
                     }
+
+                    var technicianResult =
+                        await SyncTechnicianProfileAsync(
+                            user,
+                            Array.Empty<string>(),
+                            dto.Roles);
+
+                    if (technicianResult is not null)
+                    {
+                        await transaction.RollbackAsync();
+                        return technicianResult;
+                    }
                 }
 
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return new ResponseDto<UserActionResponseDto>
@@ -228,6 +241,9 @@ namespace AutoCare_Club_Api.Services.Users
 
                 if (dto.Roles is not null)
                 {
+                    var currentRoles =
+                        await _userManager.GetRolesAsync(user);
+
                     var rolesResult = await UpdateRolesAsync(
                         user,
                         dto.Roles);
@@ -237,8 +253,21 @@ namespace AutoCare_Club_Api.Services.Users
                         await transaction.RollbackAsync();
                         return rolesResult;
                     }
+
+                    var technicianResult =
+                        await SyncTechnicianProfileAsync(
+                            user,
+                            currentRoles,
+                            dto.Roles);
+
+                    if (technicianResult is not null)
+                    {
+                        await transaction.RollbackAsync();
+                        return technicianResult;
+                    }
                 }
 
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return new ResponseDto<UserActionResponseDto>
@@ -321,6 +350,79 @@ namespace AutoCare_Club_Api.Services.Users
                 await transaction.RollbackAsync();
                 return InternalServerErrorResponse();
             }
+        }
+
+        private async Task<ResponseDto<UserActionResponseDto>?>
+            SyncTechnicianProfileAsync(
+                UserEntity user,
+                IEnumerable<string> previousRoles,
+                IEnumerable<string> requestedRoles)
+        {
+            var hadTechnicianRole = HasTechnicianRole(
+                previousRoles);
+            var shouldHaveTechnicianRole = HasTechnicianRole(
+                requestedRoles);
+
+            var technician = await _context.Technicians
+                .FirstOrDefaultAsync(profile =>
+                    profile.UserId == user.Id);
+
+            if (shouldHaveTechnicianRole)
+            {
+                if (technician is null)
+                {
+                    await _context.Technicians.AddAsync(
+                        new TechnicianEntity
+                        {
+                            UserId = user.Id,
+                            Specialty = "General",
+                            IsActive = true
+                        });
+                }
+                else if (!hadTechnicianRole)
+                {
+                    technician.IsActive = true;
+                }
+
+                return null;
+            }
+
+            if (!hadTechnicianRole ||
+                technician is null ||
+                !technician.IsActive)
+            {
+                return null;
+            }
+
+            var hasOpenAppointments = await _context.Appointments
+                .AsNoTracking()
+                .AnyAsync(appointment =>
+                    appointment.TechnicianId == user.Id &&
+                    appointment.Status != AppointmentStatus.Completed &&
+                    appointment.Status != AppointmentStatus.Cancelled);
+
+            if (hasOpenAppointments)
+            {
+                return new ResponseDto<UserActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.CONFLICT,
+                    Status = false,
+                    Message =
+                        "El técnico tiene citas pendientes que deben reasignarse antes de cambiar su rol."
+                };
+            }
+
+            technician.IsActive = false;
+            return null;
+        }
+
+        private static bool HasTechnicianRole(
+            IEnumerable<string> roles)
+        {
+            return roles.Any(role => string.Equals(
+                role?.Trim(),
+                RolesConstant.Technician,
+                StringComparison.OrdinalIgnoreCase));
         }
 
         private async Task<ResponseDto<UserActionResponseDto>?>

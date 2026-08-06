@@ -13,6 +13,9 @@ namespace AutoCare_Club.Api.Services.Payments
             string userId,
             string orderId);
 
+        Task<ResponseDto<CheckoutSessionDto>> VerifyCheckoutSessionAsync(
+            string sessionId);
+
         Task<ResponseDto<bool>> ProcessWebhookAsync(
             string payload,
             string signature);

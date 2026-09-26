@@ -110,6 +110,28 @@ namespace AutoCare_Club.Api.Controllers
                 await _orderService.CheckoutAsync(userId, dto));
         }
 
+        // Reserva y checkout comparten una transacción para no dejar una cita sin orden.
+        [HttpPost("reserve")]
+        public async Task<ActionResult<ResponseDto<OrderDto>>> Reserve(
+            CartReservationDto dto)
+        {
+            string? userId = GetAuthenticatedUserId();
+
+            if (userId is null)
+            {
+                return UnauthorizedResponse<OrderDto>();
+            }
+
+            string reservationKey = Request.Headers["Idempotency-Key"]
+                .FirstOrDefault() ?? string.Empty;
+
+            return ToActionResult(
+                await _orderService.ReserveAsync(
+                    userId,
+                    dto,
+                    reservationKey));
+        }
+
         private string? GetAuthenticatedUserId()
         {
             string? userId =

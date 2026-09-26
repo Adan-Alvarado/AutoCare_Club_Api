@@ -44,6 +44,10 @@ namespace AutoCare_Club.Api.Migrations
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("not_started");
 
+                    b.Property<string>("ReservationKey")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -79,6 +83,10 @@ namespace AutoCare_Club.Api.Migrations
                         .HasFilter("\"Status\" = 'Draft'");
 
                     b.HasIndex("VehicleId");
+
+                    b.HasIndex("UserId", "ReservationKey")
+                        .IsUnique()
+                        .HasFilter("\"ReservationKey\" IS NOT NULL");
 
                     b.ToTable("Orders");
                 });

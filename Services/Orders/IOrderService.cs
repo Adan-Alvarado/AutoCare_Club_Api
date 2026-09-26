@@ -24,6 +24,11 @@ namespace AutoCare_Club.Api.Services.Orders
             string userId,
             CartCheckoutDto dto);
 
+        Task<ResponseDto<OrderDto>> ReserveAsync(
+            string userId,
+            CartReservationDto dto,
+            string reservationKey);
+
         Task<ResponseDto<OrderDto>> GetOrderAsync(
             string userId,
             string orderId);

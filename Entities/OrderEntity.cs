@@ -18,6 +18,7 @@ namespace AutoCare_Club.Api.Entities
         public decimal Total { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Draft;
         public string? StripePaymentIntentId { get; set; }
+        public string? ReservationKey { get; set; }
         public string PaymentStatus { get; set; } = "not_started";
         public DateTime? PaidAt { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

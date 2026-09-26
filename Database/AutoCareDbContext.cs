@@ -54,6 +54,10 @@ namespace AutoCare_Club.Api.Database
                 entity.Property(order => order.StripePaymentIntentId)
                     .HasMaxLength(100);
 
+                // Una clave por usuario permite devolver el mismo resultado cuando se repite una reserva.
+                entity.Property(order => order.ReservationKey)
+                    .HasMaxLength(36);
+
                 entity.Property(order => order.PaymentStatus)
                     .HasMaxLength(50)
                     .HasDefaultValue("not_started");
@@ -69,6 +73,14 @@ namespace AutoCare_Club.Api.Database
                 entity.HasIndex(order => order.StripePaymentIntentId)
                     .IsUnique()
                     .HasFilter("\"StripePaymentIntentId\" IS NOT NULL");
+
+                entity.HasIndex(order => new
+                {
+                    order.UserId,
+                    order.ReservationKey
+                })
+                    .IsUnique()
+                    .HasFilter("\"ReservationKey\" IS NOT NULL");
 
                 entity.HasOne<UserEntity>()
                     .WithMany()

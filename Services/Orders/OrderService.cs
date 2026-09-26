@@ -6,6 +6,7 @@ using AutoCare_Club_Api.Dtos.Common;
 using AutoCare_Club_Api.Entities;
 using AutoCare_Club_Api.Services.Schedules;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using ApiStatusCode = AutoCare_Club.Api.Constants.HttpStatusCode;
 
 namespace AutoCare_Club.Api.Services.Orders
@@ -370,6 +371,182 @@ namespace AutoCare_Club.Api.Services.Orders
             return Success(
                 OrderMapper.EntityToDto(order),
                 "Orden confirmada correctamente.");
+        }
+
+        // Crea la cita y confirma el carrito como una única unidad recuperable por su clave de reintento.
+        public async Task<ResponseDto<OrderDto>> ReserveAsync(
+            string userId,
+            CartReservationDto dto,
+            string reservationKey)
+        {
+            if (!Guid.TryParse(reservationKey, out _))
+            {
+                return Error<OrderDto>(
+                    ApiStatusCode.BAD_REQUEST,
+                    "La clave de la reserva no es válida.");
+            }
+
+            if (!Guid.TryParse(dto.VehicleId, out _)
+                || !Guid.TryParse(dto.ServiceId, out _))
+            {
+                return Error<OrderDto>(
+                    ApiStatusCode.BAD_REQUEST,
+                    "Los identificadores de vehículo y servicio deben ser válidos.");
+            }
+
+            // Una respuesta perdida se resuelve devolviendo la orden ya confirmada.
+            OrderEntity? existingReservation = await OrderQuery()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(order =>
+                    order.UserId == userId
+                    && order.ReservationKey == reservationKey);
+
+            if (existingReservation is not null)
+            {
+                return Success(
+                    OrderMapper.EntityToDto(existingReservation),
+                    "La reserva ya estaba confirmada.");
+            }
+
+            await using var transaction = await _context.Database
+                .BeginTransactionAsync(IsolationLevel.Serializable);
+
+            try
+            {
+                // Repite la búsqueda dentro de la transacción para cubrir dos envíos simultáneos.
+                existingReservation = await OrderQuery()
+                    .FirstOrDefaultAsync(order =>
+                        order.UserId == userId
+                        && order.ReservationKey == reservationKey);
+
+                if (existingReservation is not null)
+                {
+                    await transaction.CommitAsync();
+                    return Success(
+                        OrderMapper.EntityToDto(existingReservation),
+                        "La reserva ya estaba confirmada.");
+                }
+
+                bool vehicleBelongsToUser = await _context.Vehicles
+                    .AsNoTracking()
+                    .AnyAsync(vehicle =>
+                        vehicle.Id == dto.VehicleId
+                        && vehicle.UserId == userId
+                        && vehicle.IsActive);
+
+                if (!vehicleBelongsToUser)
+                {
+                    return Error<OrderDto>(
+                        ApiStatusCode.NOT_FOUND,
+                        "El vehículo no existe o no pertenece al usuario.");
+                }
+
+                OrderEntity? order = await OrderQuery()
+                    .FirstOrDefaultAsync(order =>
+                        order.UserId == userId
+                        && order.Status == OrderStatus.Draft);
+
+                if (order is null)
+                {
+                    return Error<OrderDto>(
+                        ApiStatusCode.NOT_FOUND,
+                        "No hay un carrito activo para confirmar.");
+                }
+
+                if (order.Items.Count == 0
+                    || order.Items.Any(item =>
+                        !item.Service.IsActive
+                        || item.Service.DurationMinutes <= 0))
+                {
+                    return Error<OrderDto>(
+                        ApiStatusCode.BAD_REQUEST,
+                        "El carrito contiene servicios que ya no se pueden reservar.");
+                }
+
+                if (!order.Items.Any(item => item.ServiceId == dto.ServiceId))
+                {
+                    return Error<OrderDto>(
+                        ApiStatusCode.BAD_REQUEST,
+                        "El servicio seleccionado no está incluido en el carrito.");
+                }
+
+                int totalDurationMinutes;
+
+                try
+                {
+                    totalDurationMinutes = CalculateTotalDurationMinutes(order);
+                }
+                catch (OverflowException)
+                {
+                    return Error<OrderDto>(
+                        ApiStatusCode.BAD_REQUEST,
+                        "La duración total de la orden no es válida.");
+                }
+
+                var appointment = new AppointmentEntity
+                {
+                    UserId = userId,
+                    VehicleId = dto.VehicleId,
+                    ServiceId = dto.ServiceId,
+                    AppointmentDate = dto.AppointmentDate,
+                    StartTime = dto.StartTime
+                };
+
+                var durationValidation = await ValidateAppointmentDurationAsync(
+                    appointment,
+                    totalDurationMinutes);
+
+                if (durationValidation.Error is not null)
+                {
+                    return durationValidation.Error;
+                }
+
+                appointment.EndTime = durationValidation.EndTime;
+                order.VehicleId = dto.VehicleId;
+                order.AppointmentId = appointment.Id;
+                order.ReservationKey = reservationKey;
+                order.Status = OrderStatus.Pending;
+                RecalculateTotal(order);
+
+                await _context.Appointments.AddAsync(appointment);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Success(
+                    OrderMapper.EntityToDto(order),
+                    "Reserva confirmada correctamente.",
+                    ApiStatusCode.CREATED);
+            }
+            catch (DbUpdateException)
+            {
+                await transaction.RollbackAsync();
+                _context.ChangeTracker.Clear();
+
+                // El índice único resuelve la carrera de dos solicitudes con la misma clave.
+                existingReservation = await OrderQuery()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(order =>
+                        order.UserId == userId
+                        && order.ReservationKey == reservationKey);
+
+                if (existingReservation is not null)
+                {
+                    return Success(
+                        OrderMapper.EntityToDto(existingReservation),
+                        "La reserva ya estaba confirmada.");
+                }
+
+                return Error<OrderDto>(
+                    ApiStatusCode.CONFLICT,
+                    "El horario ya no está disponible para esta reserva.");
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return Error<OrderDto>(
+                    ApiStatusCode.INTERNAL_SERVER_ERROR,
+                    "No se pudo confirmar la reserva. Intenta nuevamente.");
+            }
         }
 
         public async Task<ResponseDto<OrderDto>> GetOrderAsync(
